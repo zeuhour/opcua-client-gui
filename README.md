@@ -1,58 +1,74 @@
-Simple OPC-UA GUI client.
+# opcua-client
 
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-client-gui/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-client-gui/?branch=master)
-[![Build Status](https://travis-ci.org/FreeOpcUa/opcua-client-gui.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-client-gui)
-[![Build Status](https://travis-ci.org/FreeOpcUa/opcua-widgets.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-widgets)
-
-Written using freeopcua python api and pyqt. Most needed functionalities are implemented including subscribing for data changes and events, write variable values listing attributes and references, and call methods. PR are welcome for any whished improvments
-
-It has also a contextual menu with a few usefull function like putting the mode id in clipboard or the entire browse path which can be used directly in you program: client.nodes.root.get_child(['0:Objects', '2:MyNode'])
+Simple OPC-UA GUI client built on [asyncua](https://github.com/FreeOpcUa/opcua-asyncio)
+and PyQt6.
 
 ![Screenshot](/screenshot.png?raw=true "Screenshot")
 
-What works:
-* connecting and disconnecting
-* browsing with icons per node types
-* showing attributes and references
-* subscribing to variable
-* available on pip: sudo pip install opcua-client
-* remember connections and show connection history
-* subscribing to events
-* write variable node values
-* gui for certificates
-* gui for encryption 
-* call methods
-* plot method values
-* remember last browsed path and restore state
+PRs welcome for any wished improvements.
 
-TODO (listed after priority):
+## Features
 
-* detect lost connection and automatically reconnect 
-* gui for loging with certificate or user/password (can currently be done by writting them in uri)
-* Maybe read history
-* Something else?
+- Connect / disconnect, with automatic reconnect when the transport drops:
+  views grey out and a status-bar banner is shown while the supervisor
+  re-establishes the session.
+- Browse the address space with per-node-type icons.
+- Show attributes and references for the selected node.
+- Subscribe to variable data changes and to events.
+- Write variable values.
+- GUI for application certificates and per-server security mode / policy.
+- Call methods (with dialog).
+- Live-plot subscribed variables (pyqtgraph).
+- Persist connection history, the last-browsed node per server, and window
+  layout via `QSettings`.
+- Context menu with handy helpers: copy NodeId, or copy the full browse path
+  so you can paste it into your own code:
+  `client.nodes.root.get_child(['0:Objects', '2:MyNode'])`.
 
-# How to Install
+## Install
 
-*Note: PyQt 6 is required (Python 3.9 or newer).*
+PyQt6 is required. Python 3.14 or newer.
 
-### Linux:
+```
+pip install opcua-client
+opcua-client
+```
 
-1. Make sure python and python-pip is installed
-2. `pip3 install opcua-client`
-3. Run with: `opcua-client`
+`pip install opcua-client --upgrade` to update.
 
-### Windows:
+## Development
 
-1. Install a recent Python from python.org
-2. `pip install opcua-client`
-3. Run via the script pip created: `YOUR_INSTALL_PATH\Python\Scripts\opcua-client.exe`
+The project uses [`uv`](https://docs.astral.sh/uv/) for environment and build
+management.
 
-To update to the latest release run: `pip install opcua-client --upgrade`
+```
+uv sync             # install deps + dev tools into .venv
+uv run python app.py
+uv run python tests.py           # integration tests need a free port
+uv run mypy uaclient uawidgets   # type check
+```
 
-### MacOS
+After editing any `.ui` or `.qrc` source, run `make` to regenerate
+`uaclient/*_ui.py`, `uaclient/theme/breeze_resources.py`, and
+`uawidgets/resources.py`. Targets:
 
-1. Make sure python and python-pip are installed
-2. `pip3 install opcua-client`
-3. Run with `opcua-client`
+- `make` — regenerate UI / resource Python from Qt sources.
+- `make run` — launch the GUI.
+- `make edit` — open the main `.ui` in Qt Creator.
 
+Cutting a release:
+
+```
+uv run python release.py    # bumps pyproject.toml, tags, uv build, uv publish
+```
+
+`asyncua` is currently consumed via a local path source
+(`[tool.uv.sources] asyncua = { path = "../opcua-asyncio", editable = true }`)
+because the 2.x line is still in pre-release. Drop the source entry once
+`asyncua>=2.0` is on PyPI.
+
+## TODO
+
+- GUI for logging in with user/password or certificate (currently has to be
+  written into the URI).
+- History read.
