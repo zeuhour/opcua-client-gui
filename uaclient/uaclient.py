@@ -1,7 +1,8 @@
 import logging
-from typing import Any, Callable
+from pathlib import Path
+from typing import Any, Callable, Literal
 
-from PyQt6.QtCore import QObject, QSettings, pyqtSignal
+from PyQt6.QtCore import QObject, QSettings, QStandardPaths, pyqtSignal
 
 from asyncua import crypto, ua
 from asyncua.client.ua_client import UaClientState
@@ -10,6 +11,8 @@ from asyncua.tools import endpoint_to_strings
 
 
 logger = logging.getLogger(__name__)
+
+AuthMode = Literal["anonymous", "username", "certificate"]
 
 
 class UaClient(QObject):
@@ -46,6 +49,10 @@ class UaClient(QObject):
         self.user_private_key_path: str | None = None
         self.application_certificate_path: str | None = None
         self.application_private_key_path: str | None = None
+        self.auth_mode: AuthMode = "anonymous"
+        self.username: str | None = None
+        self.password: str | None = None
+        self.endpoint_url: str | None = None
         self.load_application_certificate_settings()
 
     def shutdown(self) -> None:
@@ -84,25 +91,42 @@ class UaClient(QObject):
         self.security_policy = None
         self.user_certificate_path = None
         self.user_private_key_path = None
+        self.auth_mode = "anonymous"
+        self.username = None
+        self.endpoint_url = None
 
         mysettings = self.settings.value("security_settings", None)
-        if mysettings is None:
+        if mysettings is None or uri not in mysettings:
             return
-        if uri in mysettings:
-            mode, policy, cert, key = mysettings[uri]
+        entry = mysettings[uri]
+        if isinstance(entry, list):
+            mode, policy, cert, key = entry
             self.security_mode = mode
             self.security_policy = policy
             self.user_certificate_path = cert
             self.user_private_key_path = key
+            return
+        self.security_mode = entry.get("mode")
+        self.security_policy = entry.get("policy")
+        self.user_certificate_path = entry.get("user_certificate")
+        self.user_private_key_path = entry.get("user_private_key")
+        self.auth_mode = entry.get("auth_mode", "anonymous")
+        self.username = entry.get("username")
+        self.endpoint_url = entry.get("endpoint_url")
 
     def save_security_settings(self, uri: str) -> None:
         mysettings = self.settings.value("security_settings", None)
         if mysettings is None:
             mysettings = {}
-        mysettings[uri] = [self.security_mode,
-                           self.security_policy,
-                           self.user_certificate_path,
-                           self.user_private_key_path]
+        mysettings[uri] = {
+            "mode": self.security_mode,
+            "policy": self.security_policy,
+            "user_certificate": self.user_certificate_path,
+            "user_private_key": self.user_private_key_path,
+            "auth_mode": self.auth_mode,
+            "username": self.username,
+            "endpoint_url": self.endpoint_url,
+        }
         self.settings.setValue("security_settings", mysettings)
 
     def load_application_certificate_settings(self) -> None:
@@ -114,6 +138,16 @@ class UaClient(QObject):
             return
         self.application_certificate_path = mysettings["application_certificate"]
         self.application_private_key_path = mysettings["application_private_key"]
+
+    def generate_application_certificate(self) -> tuple[str, str]:
+        base = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+        pki_dir = (Path(base) if base else Path.home() / ".freeopcua") / "pki"
+        key_file = pki_dir / "own_private_key.pem"
+        cert_file = pki_dir / "own_cert.der"
+        client = Client("opc.tcp://localhost:4840", tloop=self._tloop)
+        client.application_uri = self.application_uri
+        cert, key = client.setup_self_signed_certificate(key_file=key_file, cert_file=cert_file)
+        return str(cert), str(key)
 
     def save_application_certificate_settings(self) -> None:
         mysettings = self.settings.value("application_certificate_settings", None)
@@ -129,19 +163,36 @@ class UaClient(QObject):
 
     def connect(self, uri: str) -> None:
         self.disconnect()
-        logger.info("Connecting to %s with parameters %s, %s, %s, %s", uri, self.security_mode, self.security_policy, self.user_certificate_path, self.user_private_key_path)
+        logger.info("Connecting to %s with parameters %s, %s, %s, %s, %s", uri, self.auth_mode, self.security_mode, self.security_policy, self.user_certificate_path, self.user_private_key_path)
         self.client = Client(uri, tloop=self._tloop)
         self.client.application_uri = self.application_uri
         self.client.description = "FreeOpcUa Client GUI"
 
-        if self.user_private_key_path:
-            self.client.load_private_key(self.user_private_key_path)
-        if self.user_certificate_path:
-            self.client.load_client_certificate(self.user_certificate_path)
+        if self.auth_mode == "username":
+            if self.username:
+                self.client.set_user(self.username)
+            if self.password:
+                self.client.set_password(self.password)
+        elif self.auth_mode == "certificate":
+            # asyncua picks the certificate identity token only when no username is set
+            # and a user certificate is loaded, so these stay scoped to this mode.
+            if self.user_private_key_path:
+                self.client.load_private_key(self.user_private_key_path)
+            if self.user_certificate_path:
+                self.client.load_client_certificate(self.user_certificate_path)
 
         if self.security_mode is not None and self.security_policy is not None:
+            if not (self.application_certificate_path and self.application_private_key_path):
+                raise ValueError(
+                    "A secure endpoint requires a client application certificate and "
+                    "private key. Set them via Settings > Client Application Certificate "
+                    "before connecting."
+                )
+            # Endpoint policy URIs spell Aes policies with underscores
+            # (Aes256_Sha256_RsaPss); the asyncua class name omits them.
+            policy_class = 'SecurityPolicy' + self.security_policy.replace('_', '')
             self.client.set_security(
-                getattr(crypto.security_policies, 'SecurityPolicy' + self.security_policy),
+                getattr(crypto.security_policies, policy_class),
                 self.application_certificate_path,
                 self.application_private_key_path,
                 mode=getattr(ua.MessageSecurityMode, self.security_mode)

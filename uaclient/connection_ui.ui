@@ -6,79 +6,199 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>520</width>
+    <height>520</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ConnectionDialog</string>
+   <string>Connect to server</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
-    <widget class="QPushButton" name="queryButton">
+  <layout class="QVBoxLayout" name="rootLayout">
+   <item>
+    <widget class="QGroupBox" name="securityGroupBox">
+     <property name="title">
+      <string>Security (message security mode)</string>
+     </property>
+     <layout class="QVBoxLayout" name="securityModeLayout"/>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="authGroupBox">
+     <property name="title">
+      <string>Authentication</string>
+     </property>
+     <layout class="QGridLayout" name="authLayout">
+      <item row="0" column="0" colspan="3">
+       <widget class="QRadioButton" name="anonymousRadioButton">
+        <property name="text">
+         <string>Anonymous</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <widget class="QRadioButton" name="usernameRadioButton">
+        <property name="text">
+         <string>Username</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="usernameLabel">
+        <property name="text">
+         <string>User</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1" colspan="2">
+       <widget class="QLineEdit" name="usernameLineEdit"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="passwordLabel">
+        <property name="text">
+         <string>Password</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="2">
+       <widget class="QLineEdit" name="passwordLineEdit">
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="3">
+       <widget class="QRadioButton" name="certificateRadioButton">
+        <property name="text">
+         <string>Certificate</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="userCertificateLabel">
+        <property name="text">
+         <string>User certificate</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLineEdit" name="userCertificateLineEdit">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2">
+       <widget class="QPushButton" name="userCertificateButton">
+        <property name="text">
+         <string>Browse…</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="userPrivateKeyLabel">
+        <property name="text">
+         <string>Private key</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QLineEdit" name="userPrivateKeyLineEdit">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="2">
+       <widget class="QPushButton" name="userPrivateKeyButton">
+        <property name="text">
+         <string>Browse…</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="endpointLabel">
      <property name="text">
-      <string>Query server capability</string>
+      <string>Endpoints</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Security Policy</string>
+   <item>
+    <widget class="QListWidget" name="endpointListWidget">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
      </property>
     </widget>
    </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QComboBox" name="policyComboBox"/>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Message Security Mode</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1" colspan="2">
-    <widget class="QComboBox" name="modeComboBox"/>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="certificateLabel">
-     <property name="text">
-      <string>None</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1" colspan="2">
-    <widget class="QPushButton" name="certificateButton">
-     <property name="text">
-      <string>Select certificate</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="privateKeyLabel">
-     <property name="text">
-      <string>None</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1" colspan="2">
-    <widget class="QPushButton" name="privateKeyButton">
-     <property name="text">
-      <string>Select private key</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="2">
-    <widget class="QPushButton" name="closeButton">
-     <property name="text">
-      <string>Close</string>
-     </property>
-    </widget>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <widget class="QPushButton" name="refreshButton">
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="buttonSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancelButton">
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="connectButton">
+       <property name="text">
+        <string>Connect</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+       <property name="autoDefault">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>anonymousRadioButton</tabstop>
+  <tabstop>usernameRadioButton</tabstop>
+  <tabstop>usernameLineEdit</tabstop>
+  <tabstop>passwordLineEdit</tabstop>
+  <tabstop>certificateRadioButton</tabstop>
+  <tabstop>userCertificateLineEdit</tabstop>
+  <tabstop>userCertificateButton</tabstop>
+  <tabstop>userPrivateKeyLineEdit</tabstop>
+  <tabstop>userPrivateKeyButton</tabstop>
+  <tabstop>endpointListWidget</tabstop>
+  <tabstop>refreshButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+  <tabstop>connectButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

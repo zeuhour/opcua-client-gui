@@ -331,13 +331,12 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
-        self.ui.connectButton.clicked.connect(self.connect)
+        self.ui.connectButton.clicked.connect(self.show_connection_dialog)
         self.ui.disconnectButton.clicked.connect(self.disconnect)
 
-        self.ui.actionConnect.triggered.connect(self.connect)
+        self.ui.actionConnect.triggered.connect(self.show_connection_dialog)
         self.ui.actionDisconnect.triggered.connect(self.disconnect)
 
-        self.ui.connectOptionButton.clicked.connect(self.show_connection_dialog)
         self.ui.actionClient_Application_Certificate.triggered.connect(self.show_application_certificate_dialog)
         self.ui.actionDark_Mode.triggered.connect(self.dark_mode)
 
@@ -351,17 +350,20 @@ class Window(QMainWindow):
         self.uaclient.load_security_settings(uri)
 
     def show_connection_dialog(self) -> None:
-        dia = ConnectionDialog(self, self.ui.addrComboBox.currentText())
-        dia.security_mode = self.uaclient.security_mode
-        dia.security_policy = self.uaclient.security_policy
-        dia.certificate_path = self.uaclient.user_certificate_path
-        dia.private_key_path = self.uaclient.user_private_key_path
-        ret = dia.exec()
-        if ret:
-            self.uaclient.security_mode = dia.security_mode
-            self.uaclient.security_policy = dia.security_policy
-            self.uaclient.user_certificate_path = dia.certificate_path
-            self.uaclient.user_private_key_path = dia.private_key_path
+        uri = self.ui.addrComboBox.currentText().strip()
+        self.uaclient.load_security_settings(uri)
+        dia = ConnectionDialog(self, uri)
+        if not dia.exec():
+            return
+        self.uaclient.security_mode = dia.security_mode
+        self.uaclient.security_policy = dia.security_policy
+        self.uaclient.endpoint_url = dia.endpoint_url
+        self.uaclient.auth_mode = dia.auth_mode  # type: ignore[assignment]
+        self.uaclient.username = dia.username
+        self.uaclient.password = dia.password
+        self.uaclient.user_certificate_path = dia.user_certificate_path or None
+        self.uaclient.user_private_key_path = dia.user_private_key_path or None
+        self.connect()
 
     def show_application_certificate_dialog(self) -> None:
         dia = ApplicationCertificateDialog(self)
@@ -424,7 +426,6 @@ class Window(QMainWindow):
         has_session = state in ("connected", "reconnecting")
 
         self.ui.connectButton.setEnabled(not has_session)
-        self.ui.connectOptionButton.setEnabled(not has_session)
         self.ui.actionConnect.setEnabled(not has_session)
         self.ui.disconnectButton.setEnabled(has_session)
         self.ui.actionDisconnect.setEnabled(has_session)

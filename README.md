@@ -69,6 +69,4 @@ because the 2.x line is still in pre-release. Drop the source entry once
 
 ## TODO
 
-- GUI for logging in with user/password or certificate (currently has to be
-  written into the URI).
 - History read.
