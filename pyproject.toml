@@ -1,15 +1,15 @@
 [project]
 name = "opcua-client"
-version = "0.9.99"
+version = "1.0.0"
 description = "OPC-UA Client GUI"
 authors = [{ name = "Olivier R-D" }]
 license = { text = "GNU General Public License" }
 requires-python = ">=3.14"
 dependencies = [
-    "asyncua>=2.0a0",
-    "PyQt6",
-    "pyqtgraph",
-    "numpy",
+  "PyQt6",
+  "asyncua>=2.0",
+  "numpy",
+  "pyqtgraph",
 ]
 
 [project.urls]
@@ -18,21 +18,12 @@ Repository = "https://github.com/FreeOpcUa/opcua-client-gui"
 [project.scripts]
 opcua-client = "uaclient.mainwindow:main"
 
-[build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["uaclient", "uaclient.theme", "uawidgets"]
-
-[tool.setuptools.package-data]
-uawidgets = ["py.typed"]
-
 [dependency-groups]
 dev = ["mypy"]
 
-[tool.uv.sources]
-asyncua = { path = "../opcua-asyncio", editable = true }
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
 
 [tool.mypy]
 python_version = "3.14"
@@ -50,10 +41,16 @@ follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = [
-    "uaclient.mainwindow_ui",
-    "uaclient.connection_ui",
-    "uaclient.applicationcertificate_ui",
-    "uaclient.theme.breeze_resources",
-    "uawidgets.resources",
+  "uaclient.mainwindow_ui",
+  "uaclient.connection_ui",
+  "uaclient.applicationcertificate_ui",
+  "uaclient.theme.breeze_resources",
+  "uawidgets.resources",
 ]
 follow_imports = "skip"
+
+[tool.setuptools]
+packages = ["uaclient", "uaclient.theme", "uawidgets"]
+
+[tool.setuptools.package-data]
+uawidgets = ["py.typed"]
